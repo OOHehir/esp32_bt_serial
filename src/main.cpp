@@ -40,9 +40,7 @@ String MACadd =
     "03:B4:16:72:36:9C"; // BT: Variable used to store the CLIENT(Slave)
                          // bluetooth device Mac address; just for prinitng;
                          // just for printing in this case
-uint8_t address[6] = {
-    0x03, 0xB4, 0x16, 0x72,
-    0x36, 0x9C}; // BT: Variable used to store the CLIENT(Slave) MAC address
+uint8_t address[6] = {0xC8, 0xF0, 0x9E, 0xFB, 0xBE, 0x4E}; // BT: Variable used to store the CLIENT(Slave) MAC address
                  // used for the connection; Use your own andress in the same
                  // format
 

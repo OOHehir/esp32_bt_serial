@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+/.vscode
+/.pio
+sdkconfig.esp-wrover-kit.old

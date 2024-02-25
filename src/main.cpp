@@ -11,27 +11,31 @@
 #include <stdio.h>
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+  #error Bluetooth is not enabled. Please run `make menuconfig` to and enable it
 #endif
 
-// Flashing-> not connected, steady -> connected
-#define BT_CONNECTION_LED GPIO_NUM_2
-// Flashing-> normal
-#define HEARTBEAT_LED GPIO_NUM_8
+// Check Serial Port Profile
+#if !defined(CONFIG_BT_SPP_ENABLED)
+  #error Serial Port Profile for Bluetooth is not available or not enabled. It is only available for the ESP32 chip.
+#endif
+
+#define BT_CONNECTION_LED GPIO_NUM_2  // Flashing-> not connected, steady -> connected
+#define HEARTBEAT_LED GPIO_NUM_8      // Flashing-> normal
 
 int reconnection_count = 0;
 bool bt_connected = false;
 
+TaskHandle_t flashLED_TaskHandler = nullptr;
+
 String relay_bt_name = "ESP32-BT-Master";
-char identifier[] = "[Relay] ";
-uint8_t slave_mac_address[6] = {0xC8, 0xF0, 0x9E, 0xFB, 0xBE, 0x4E};
+uint8_t slave_mac_address[6] = {0xC8, 0xF0, 0x9E, 0xFB, 0xBE, 0x4E};  // MAC address of the slave device
 BluetoothSerial SerialBT;
 
 extern "C" {
 void app_main(void);
 }
 
-void flashLED() {
+void flashLED(void *) {
   while (1) {
     gpio_set_level(HEARTBEAT_LED, HIGH);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -47,7 +51,12 @@ void flashLED() {
 }
 
 void bt_status_callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param) {
-  if (event == ESP_SPP_OPEN_EVT) {
+  if (event == ESP_SPP_DATA_IND_EVT) {
+      while (SerialBT.available() > 0) {
+        char c = SerialBT.read();
+        Serial.write(c);
+      }
+  } else if (event == ESP_SPP_OPEN_EVT) {
     Serial.println("Client Connected");
     bt_connected = true;
     reconnection_count = 0;
@@ -64,7 +73,7 @@ void slave_connect() {
     Serial.printf("This device BT name: %s\n", relay_bt_name.c_str());
     Serial.printf("Attempting to connect to device address: ");
     for (auto i = 0; i < sizeof(slave_mac_address); i++) {
-      // TODO: Serial.printf("0x%c, ", (const char*)(slave_mac_address[i]));
+      Serial.printf("%#2X, ", slave_mac_address[i]);
     }
     Serial.println();
     previousMillisReconnect = millis();
@@ -77,7 +86,10 @@ void slave_connect() {
 }
 
 void app_main(void) {
-  // TODO: start LED task
+  if (xTaskCreate(flashLED, "flashLED", 1024 * 2, NULL, 10, &flashLED_TaskHandler) != pdPASS) {
+    printf("Failed to create task");
+  }
+
   Serial.begin(115200);
   delay(3000);
   printf("\n");
@@ -111,19 +123,23 @@ void app_main(void) {
   SerialBT.register_callback(bt_status_callback);
   SerialBT.begin(relay_bt_name, true);
 
+  // Remove extraneous serial output from this device
+  esp_log_level_set("*", ESP_LOG_ERROR);
+
   while (1) {
     if (!bt_connected) {
         slave_connect();
     }
 
     if (Serial.available()) {
-      SerialBT.write(Serial.read());
-    }
+      uint8_t buf[48] = {};
+      auto len = Serial.read(buf, sizeof(buf));
 
-    if (SerialBT.available()) {
-      // Add an identifier at the start of the msg
-      String s = identifier + SerialBT.read();
-      Serial.write(s.c_str());
+      // Some devices require a newline character to process the input
+      buf[len++] = '\n';
+      // printf("Received %d bytes\n", len);
+      // printf("Sending: %s\n", buf);
+      SerialBT.write(buf, len);
     }
 
     vTaskDelay(10 / portTICK_PERIOD_MS);

@@ -1,8 +1,7 @@
-# Scrolling text display using the MAX7219 LED driver on a ESP32-C3
+# ESP32 Serial to Serial BT (Classic)
 
-This is a simple example of how to use the MAX7219 LED driver with the ESP32-C3. The MAX7219 is a 8-digit LED display driver, which can be used to drive a 8x8 LED matrix or a 7-segment LED display. 
-
-The driver is connected to the ESP32-C3 using the SPI interface.
+Based on [this source](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/bluetooth.html#serial-to-serial-bt) with improvements.
 
 It uses the esp-idf & arduino libraries on PlatformIO.
 
+Make sure the Bluetooth MAC address of the device that needs to be paired is set in the code.

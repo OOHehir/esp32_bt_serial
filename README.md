@@ -1,4 +1,4 @@
-# ESP32 Serial to Serial BT (Classic)
+# ESP32 Serial to BT (Classic)
 
 Based on [this source](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/bluetooth.html#serial-to-serial-bt) with improvements.
 

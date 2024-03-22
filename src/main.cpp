@@ -19,8 +19,8 @@
   #error Serial Port Profile for Bluetooth is not available or not enabled. It is only available for the ESP32 chip.
 #endif
 
-#define BT_CONNECTION_LED GPIO_NUM_2  // Flashing-> not connected, steady -> connected
-#define HEARTBEAT_LED GPIO_NUM_8      // Flashing-> normal
+#define BT_CONNECTION_LED GPIO_NUM_13  // Flashing-> not connected, steady -> connected
+#define HEARTBEAT_LED GPIO_NUM_14      // Flashing-> normal
 
 int reconnection_count = 0;
 bool bt_connected = false;
